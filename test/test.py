@@ -15,7 +15,8 @@
 #   C++の場合 ：a.exe
 #   Rustの場合：<Rustプロジェクトフォルダ>/target/release/***.exe
 # PROGRAM_CMD = "./tools/target/release/tester ./target/release/ahc030"
-PROGRAM_CMD = "./tools/target/release/tester python3 sample.py"
+filename = input()
+PROGRAM_CMD = f"./tools/target/release/tester python3 {filename}"
 
 # テスト対象seed番号
 START_SEED = 0
