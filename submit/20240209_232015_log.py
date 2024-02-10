@@ -27,19 +27,34 @@ oil_grid_num = len(tmp)
 
 # drill every square
 has_oil = []
+oil_reserves = 0
 for i in range(N):
     for j in range(N):
         print("q 1 {} {}".format(i, j))
         resp = int(input())
-        #print(resp,type(resp), file=sys.stderr)
+        oil_reserves += resp
+        # print(resp,oil_reserves, file=sys.stderr)
+
         if resp > 0:
             has_oil.append((i, j))
-            # print(len(has_oil), file=sys.stderr)
 
-        if len(has_oil) == oil_grid_num:
-            # print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))),  file=sys.stderr)
+        if oil_reserves == oil_grid_num:
             print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
             resp = input()
             # print(resp, file=sys.stderr)
             # assert resp == "1"
             sys.exit()
+
+"""
+        if resp > 0:
+            has_oil.append((i, j))
+            print(len(has_oil),oil_grid_num, file=sys.stderr)
+
+        if len(has_oil) == oil_grid_num or len(has_oil) == N**2:
+            # print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))),  file=sys.stderr)
+            print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+            resp = input()
+            print(resp, file=sys.stderr)
+            # assert resp == "1"
+            sys.exit()
+"""
