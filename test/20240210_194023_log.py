@@ -4,6 +4,19 @@
 全ての油田を探し終えた時点で探索をやめるよう変更する
 """
 
+### 使用関数
+def extract_squares_coordinates_grouped(N, d):
+    squares = []
+    for i in range(0, N, d):
+        for j in range(0, N, d):
+            # 一辺dの正方形または余白にある長方形のすべての座標を含むリストを作成
+            square = []
+            for di in range(min(d, N - i)):
+                for dj in range(min(d, N - j)):
+                    square.append((i + di, j + dj))
+            squares.append(square)
+    return squares
+
 ### ベース部分
 
 import sys
@@ -34,83 +47,59 @@ oil_grid_num = len(tmp)
 # 任意のマスずつ占いを使ってみる
 # 各行→各列で行い，両方0のマス目は後回しで探索
 
-fortune_res_idx = {}
 idx_fortune_over0 = []
 idx_fortune_0 = []
 
-for f in range(N):
-    # 占いに渡すリストを生成→横一行渡す
-    fortune_input = []
-    fortune_input = [(f, x) for x in range(N)]
-    print("q {} {}".format(len(fortune_input), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), fortune_input))))
+d = 2 # 正方形の一辺
+coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
+
+for g in coordinates_grouped:
+    print("q {} {}".format(len(g), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), g))))
     resp = float(input()) # V(s)の近似値を受け取る
-    fortune_res_idx[f] = resp # key：行，val：その行のV(s)の近似値
     if resp > 0:
-        idx_fortune_over0.append(f)
+        idx_fortune_over0.append(g)
     else:
-        idx_fortune_0.append(f)
-        
-fortune_res_col = {}
-col_fortune_over0 = []
-col_fortune_0 = []
+        idx_fortune_0.append(g)
 
-for f in range(N):
-    # 占いに渡すリストを生成→縦一列渡す
-    fortune_input = []
-    fortune_input = [(x, f) for x in range(N)]
-    print("q {} {}".format(len(fortune_input), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), fortune_input))))
-    resp = float(input()) # V(s)の近似値を受け取る
-    fortune_res_col[f] = resp # key：列，val：その列のV(s)の近似値
-    if resp > 0:
-        col_fortune_over0.append(f)
-    else:
-        col_fortune_0.append(f)
-
-#print(fortune_res_idx, file=sys.stderr)
-#print(fortune_res_col, file=sys.stderr)
-
-# 両方0だったマスは探索範囲から消す
-# TODO:片方でも0だったマスは探索範囲から消す
-
-matching_cells = [(row, col) for row in range(N) for col in range(N) if fortune_res_idx[row] >= 1.0 and fortune_res_col[col] >= 1.0]
-not_matching_cells = [(row, col) for row in range(N) for col in range(N) if fortune_res_idx[row] == 0.0 or fortune_res_col[col] == 0.0]
-# print(matching_cells, file=sys.stderr)
-
-
-
+print(idx_fortune_over0, file=sys.stderr)
+#print(idx_fortune_0, file=sys.stderr)
 
 # 占いの結果，行列が両方0より大きかったマスを探索
 has_oil = []
 oil_reserves = 0
-for i,j in matching_cells:
-    print("q 1 {} {}".format(i, j))
-    resp = int(input())
-    oil_reserves += resp
-    # print(resp,oil_reserves, file=sys.stderr)
+for _ in idx_fortune_over0:
+    for i,j in _:
+        print("q 1 {} {}".format(i, j))
+        resp = int(input())
+        oil_reserves += resp
+        # print(resp,oil_reserves, file=sys.stderr)
 
-    if resp > 0:
-        has_oil.append((i, j))
+        if resp > 0:
+            has_oil.append((i, j))
 
-    if oil_reserves == oil_grid_num:
-        print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
-        resp = input()
-        # print(resp, file=sys.stderr)
-        # assert resp == "1"
-        sys.exit()
+        if oil_reserves == oil_grid_num:
+            print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+            resp = input()
+            # print(resp, file=sys.stderr)
+            # assert resp == "1"
+            sys.exit()
+print("-----", file=sys.stderr)
+print(has_oil, file=sys.stderr)
 
-#print("fortune miss", file=sys.stderr)
-for i,j in not_matching_cells:
-    print("q 1 {} {}".format(i, j))
-    resp = int(input())
-    oil_reserves += resp
-    # print(resp,oil_reserves, file=sys.stderr)
+print("fortune miss", file=sys.stderr)
+for _ in idx_fortune_0:
+    for i,j in _:
+        print("q 1 {} {}".format(i, j))
+        resp = int(input())
+        oil_reserves += resp
+        # print(resp,oil_reserves, file=sys.stderr)
 
-    if resp > 0:
-        has_oil.append((i, j))
+        if resp > 0:
+            has_oil.append((i, j))
 
-    if oil_reserves == oil_grid_num:
-        print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
-        resp = input()
-        # print(resp, file=sys.stderr)
-        # assert resp == "1"
-        sys.exit()
+        if oil_reserves == oil_grid_num:
+            print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+            resp = input()
+            # print(resp, file=sys.stderr)
+            # assert resp == "1"
+            sys.exit()
