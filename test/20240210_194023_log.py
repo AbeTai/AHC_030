@@ -50,7 +50,7 @@ oil_grid_num = len(tmp)
 idx_fortune_over0 = []
 idx_fortune_0 = []
 
-d = 2 # 正方形の一辺
+d = 3 # 正方形の一辺
 coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
 
 for g in coordinates_grouped:
