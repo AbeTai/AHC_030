@@ -27,13 +27,15 @@ N = int(line[0])
 M = int(line[1])
 eps = float(line[2])
 fields = []
+square_list = []
 for _ in range(M):
     line = input().split()
     ps = []
+    square_list.append(int(line[0]))
     for i in range(int(line[0])):
         ps.append((int(line[2*i+1]), int(line[2*i+2])))
     fields.append(ps)
-
+print(square_list, file=sys.stderr)
 
 # 油田のマス目の数(重複あり)
 tmp = []
@@ -50,7 +52,12 @@ oil_grid_num = len(tmp)
 idx_fortune_over0 = []
 idx_fortune_0 = []
 
-d = 3 # 正方形の一辺
+if min(square_list) <= 10:
+    d = 2
+else:
+    d = 3
+
+#d = 2 # 正方形の一辺
 coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
 
 for g in coordinates_grouped:
@@ -61,7 +68,7 @@ for g in coordinates_grouped:
     else:
         idx_fortune_0.append(g)
 
-print(idx_fortune_over0, file=sys.stderr)
+#print(idx_fortune_over0, file=sys.stderr)
 #print(idx_fortune_0, file=sys.stderr)
 
 # 占いの結果，行列が両方0より大きかったマスを探索
@@ -83,10 +90,9 @@ for _ in idx_fortune_over0:
             # print(resp, file=sys.stderr)
             # assert resp == "1"
             sys.exit()
-print("-----", file=sys.stderr)
-print(has_oil, file=sys.stderr)
 
-print("fortune miss", file=sys.stderr)
+
+#print("fortune miss", file=sys.stderr)
 for _ in idx_fortune_0:
     for i,j in _:
         print("q 1 {} {}".format(i, j))
