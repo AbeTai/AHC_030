@@ -18,7 +18,6 @@ def extract_squares_coordinates_grouped(N, d):
     return squares
 
 ### ベース部分
-
 import sys
 
 # read prior information
