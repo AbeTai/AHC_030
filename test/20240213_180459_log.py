@@ -11,23 +11,9 @@
 ↓
 全ての油田を探し終えた時点で探索をやめる
 """
-
-### 使用関数
-def extract_squares_coordinates_grouped(N, d):
-    squares = []
-    for i in range(0, N, d):
-        for j in range(0, N, d):
-            # 一辺dの正方形または余白にある長方形のすべての座標を含むリストを作成
-            square = []
-            for di in range(min(d, N - i)):
-                for dj in range(min(d, N - j)):
-                    square.append((i + di, j + dj))
-            squares.append(square)
-    return squares
-
-### ベース部分
+from collections import Counter
 import sys
-
+### ベース部分
 # read prior information
 line = input().split()
 N = int(line[0])
@@ -43,6 +29,12 @@ for _ in range(M):
         ps.append((int(line[2*i+1]), int(line[2*i+2])))
     fields.append(ps)
 #print(square_list, file=sys.stderr)
+    
+# 全マス目の一覧を生成
+coordinate_pool = []
+for i in range(N):
+    for j in range(N):
+        coordinate_pool.append((i,j))
 
 # 油田のマス目の数(重複あり)
 tmp = []
@@ -50,61 +42,49 @@ for m in range(M):
     tmp.extend(fields[m])
 oil_grid_num = len(tmp)
 
-### 占い&掘る部分
+### マスごとの期待値を計算（事前分布的なもの）
+# 計算前(全て0)
+coordinate_exp = dict(zip(coordinate_pool,[0]*len(coordinate_pool)))
+# 各ポリオミノについて計算
+for pol in fields:
+    coordinate_exp_tmp = dict(zip(coordinate_pool,[0]*len(coordinate_pool)))
+    # 並行移動可能幅を定義
+    max_polyomino_x = max([x[0] for x in pol])
+    max_polyomino_y = max([x[1] for x in pol])
+    low_move = N - max_polyomino_x
+    light_move = N - max_polyomino_y
+    print(low_move,light_move, file=sys.stderr)
 
-# 占いの結果，行列が両方0より大きかったマスを探索
+    for low in range(low_move):
+        for light in range(light_move):
+            coordinate_possible = [(x[0]+low, x[1]+light) for x in pol]
+            # 要素の出現回数をカウント
+            element_counts = Counter(coordinate_possible)
+            # 既存の辞書に出現回数を足し算
+            for key, count in element_counts.items():
+                coordinate_exp_tmp[key] += count
+    divider = low_move * light_move
+    coordinate_exp_tmp_div = {key: value / divider for key, value in coordinate_exp_tmp.items()}
+
+    # 既存の辞書に出現回数を足し算
+    for key, count in coordinate_exp_tmp_div.items():
+        coordinate_exp[key] += count
+
+#print(coordinate_exp, file=sys.stderr)
+
+# 一旦シンプルに，期待値順に占って，掘り終わるまでやる
+# 掘る順番
+dig_order= dict(sorted(coordinate_exp.items(), key=lambda item: item[1], reverse=True)).keys()
+
 has_oil = []
 oil_reserves = 0
 
-#idx_fortune_over0 = []
-idx_fortune_0 = []
-
-if max(square_list) <= 10:
-    d = 2
-else:
-    d = 3
-
-coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
-
-for g in coordinates_grouped:
-    #print(g, file = sys.stderr)
-    print("q {} {}".format(len(g), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), g))))
-    resp = float(input()) # V(s)の近似値を受け取る
-    if resp > 0:
-        #idx_fortune_over0.append(g)
-        # 逐次的に掘る
-        for g_dev in g:
-            # print(g_dev, file = sys.stderr)
-            print("q 1 {} {}".format(g_dev[0], g_dev[1]))
-            resp_ = int(input())
-            if resp_  > 0:
-                oil_reserves += resp_
-                has_oil.append(g_dev)
-
-            if oil_reserves == oil_grid_num:
-                print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
-                resp = input()
-                # print(resp, file=sys.stderr)
-                # assert resp == "1"
-                sys.exit()
-
-    else:
-        idx_fortune_0.extend(g) # 外した場合用
-
-#print(idx_fortune_over0, file=sys.stderr)
-#print(idx_fortune_0, file=sys.stderr)
-
-
-#print("fortune miss", file=sys.stderr)
-
-for g_dev_ in idx_fortune_0:
-    print("q 1 {} {}".format(g_dev_[0], g_dev_[1]))
+for (i, j) in dig_order:
+    print("q 1 {} {}".format(i, j))
     resp = int(input())
-    # print(resp,oil_reserves, file=sys.stderr)
-
+    oil_reserves += resp
     if resp > 0:
-        oil_reserves += resp
-        has_oil.append(g_dev_)
+            has_oil.append((i, j))
 
     if oil_reserves == oil_grid_num:
         print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
