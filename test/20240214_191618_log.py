@@ -8,6 +8,8 @@
 ↓
 あるマスを占った値に応じて隣接マスの事後確率を更新
 ↓
+これで終わらない場合，占いをミスった部分を最後に探索
+↓
 全ての油田を探し終えた時点で探索をやめる
 """
 from collections import Counter
@@ -26,6 +28,22 @@ def extract_squares_coordinates_grouped(N, d):
                     square.append((i + di, j + dj))
             squares.append(square)
     return squares
+
+def generate_neighboor_coordinates(i, j, N):
+    adjacent_coordinates = []
+    # Up
+    if i > 0:
+        adjacent_coordinates.append((i - 1, j))
+    # Down
+    if i < N - 1:
+        adjacent_coordinates.append((i + 1, j))
+    # Left
+    if j > 0:
+        adjacent_coordinates.append((i, j - 1))
+    # Right
+    if j < N - 1:
+        adjacent_coordinates.append((i, j + 1))
+    return adjacent_coordinates
 
 ### ベース部分
 # read prior information
@@ -93,7 +111,6 @@ coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡�
 # 事後分布格納用リスト
 coordinate_exp_fortune = copy.deepcopy(coordinate_exp)
 
-
 for g in coordinates_grouped:
     # その正方形の期待値を取り出す
     ## その行の期待値の和を計算
@@ -117,24 +134,75 @@ for g in coordinates_grouped:
 #print(coordinate_exp, file=sys.stderr)
 #print(coordinate_exp_idx_col, file=sys.stderr)
 
+# 外した時用に，元々期待値0で，占いで0になったマスのリスト作る
+# 元々0のリスト
+coordinate_exp_0 = [key for key, value in coordinate_exp.items() if value == 0]
+# 占いで0のリスト
+coordinate_exp_fortune_0 = [key for key, value in coordinate_exp_fortune.items() if value == 0]
+# 差分
+possible_miss_list = list(set(coordinate_exp_fortune_0) - set(coordinate_exp_0))
+#print(coordinate_exp_0, file=sys.stderr)
+#print(coordinate_exp_fortune_0, file=sys.stderr)
+#print(possible_miss_list, file=sys.stderr)
 
-# 一旦シンプルに，行占いで補正した期待値順に占って，掘り終わるまでやる
-# 掘る順番
-dig_order = dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys()
+# 占い後の事後確率高い順に修正
+dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
+#print(dig_order, file=sys.stderr)
 
 has_oil = []
 oil_reserves = 0
 
-for (i, j) in dig_order:
+up_times = 2
+down_times = 2
+
+for _ in range(N*N):
+    #print(len(dig_order), file=sys.stderr)
+    (i,j) = dig_order[0]
+    #print((i,j), file=sys.stderr)
+    #print(dig_order[0], file=sys.stderr)
     print("q 1 {} {}".format(i, j))
     resp = int(input())
     oil_reserves += resp
-    if resp > 0:
-            has_oil.append((i, j))
+    #print(oil_reserves, file=sys.stderr)
+    coordinate_exp_fortune[(i,j)] = 0
+    coordinate_next = generate_neighboor_coordinates(i,j,N)
 
-    if oil_reserves == oil_grid_num:
-        print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
-        resp = input()
-        # print(resp, file=sys.stderr)
-        # assert resp == "1"
-        sys.exit()
+    # 変更部分
+    ## 占いの結果によって事後確率を更新
+    if resp > 0:
+        has_oil.append((i,j))
+        
+        #print(coordinate_next, file=sys.stderr)
+        #sys.exit()
+        for n in coordinate_next:
+            coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
+        dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
+
+        if oil_reserves == oil_grid_num:
+            print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+            resp = input()
+            # print(resp, file=sys.stderr)
+            # assert resp == "1"
+            sys.exit()
+
+    else:
+        for n in coordinate_next:
+            coordinate_exp_fortune[n] = down_times * coordinate_exp_fortune[n]
+        dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
+
+    if set(coordinate_exp_fortune.values()) == {0}:
+        # print("miss", file = sys.stderr)
+        for (i,j) in possible_miss_list:
+            print("q 1 {} {}".format(i, j))
+            resp = int(input())
+            oil_reserves += resp
+            if resp > 0:
+                has_oil.append((i,j))
+
+            if oil_reserves == oil_grid_num:
+                print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+                resp = input()
+                # print(resp, file=sys.stderr)
+                # assert resp == "1"
+                sys.exit()
+
