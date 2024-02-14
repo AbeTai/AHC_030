@@ -137,7 +137,7 @@ if __name__ == "__main__":
     print(f"average(log): {average_log_score:.5}")
 
     # 結果保存
-    RESULT_FILE = f"result_{filename}.csv"
+    RESULT_FILE = f"result/result_{filename}.csv"
     result_file_path = os.path.join(script_dir, RESULT_FILE)
     fp = open(result_file_path, "w")
 

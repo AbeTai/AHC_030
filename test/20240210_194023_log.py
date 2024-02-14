@@ -51,10 +51,8 @@ oil_grid_num = len(tmp)
 idx_fortune_over0 = []
 idx_fortune_0 = []
 
-if min(square_list) <= 10:
-    d = 2
-else:
-    d = 3
+
+d = 3
 
 #d = 2 # 正方形の一辺
 coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
