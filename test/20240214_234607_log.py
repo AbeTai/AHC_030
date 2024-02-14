@@ -7,7 +7,7 @@
 その上で、期待値高い順に掘る
 ↓
 あるマスを占った値に応じて隣接マスの事後確率を更新
-※掛け算ではなく足し算．元々の期待値が0の部分だけ0で上書き．
+※隣接マスの範囲を拡大
 ↓
 これで終わらない場合，占いをミスった部分を最後に探索
 ↓
@@ -44,6 +44,19 @@ def generate_neighboor_coordinates(i, j, N):
     # Right
     if j < N - 1:
         adjacent_coordinates.append((i, j + 1))
+    return adjacent_coordinates
+
+def generate_neighboor_coordinates_cross(i, j, N):
+    adjacent_coordinates = []
+    # Up
+    if i > 0 and j > 0:
+        adjacent_coordinates.append((i - 1, j - 1))
+    if i > 0 and j < N -1:
+        adjacent_coordinates.append((i - 1, j + 1))
+    if i < N - 1 and j > 0:
+        adjacent_coordinates.append((i + 1, j - 1))
+    if i < N - 1 and j < N - 1:
+        adjacent_coordinates.append((i + 1, j + 1))
     return adjacent_coordinates
 
 ### ベース部分
@@ -156,7 +169,8 @@ oil_reserves = 0
 # ルールベースならグリッドサーチ
 # アルゴリズムは考える
 up_times = 1000
-down_times = 0.7
+up_times_cross = 1.5
+down_times = 0.5
 
 for _ in range(N*N):
     #print(len(dig_order), file=sys.stderr)
@@ -169,6 +183,7 @@ for _ in range(N*N):
     #print(oil_reserves, file=sys.stderr)
     coordinate_exp_fortune[(i,j)] = 0
     coordinate_next = generate_neighboor_coordinates(i,j,N)
+    coordinate_next_cross = generate_neighboor_coordinates_cross(i,j,N)
 
     # 変更部分
     ## 占いの結果によって事後確率を更新
@@ -179,6 +194,9 @@ for _ in range(N*N):
         #sys.exit()
         for n in coordinate_next:
             coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
+
+        for n in coordinate_next_cross:
+            coordinate_exp_fortune[n] = up_times_cross * coordinate_exp_fortune[n]
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
 
         if oil_reserves == oil_grid_num:
