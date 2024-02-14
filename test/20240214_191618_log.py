@@ -152,8 +152,10 @@ dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: it
 has_oil = []
 oil_reserves = 0
 
-up_times = 2
-down_times = 2
+# ルールベースならグリッドサーチ
+# アルゴリズムは考える
+up_times = 1000
+down_times = 0.7
 
 for _ in range(N*N):
     #print(len(dig_order), file=sys.stderr)
