@@ -16,7 +16,7 @@
 #   Rustの場合：<Rustプロジェクトフォルダ>/target/release/***.exe
 # PROGRAM_CMD = "./tools/target/release/tester ./target/release/ahc030"
 filename = input()
-PROGRAM_CMD = f"./tools/target/release/tester python3 {filename}"
+PROGRAM_CMD = f"./tools/target/release/tester python3 {filename}.py"
 
 # テスト対象seed番号
 START_SEED = 0
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     print(f"average(log): {average_log_score:.5}")
 
     # 結果保存
-    RESULT_FILE = "result.csv"
+    RESULT_FILE = f"result_{filename}.csv"
     result_file_path = os.path.join(script_dir, RESULT_FILE)
     fp = open(result_file_path, "w")
 
