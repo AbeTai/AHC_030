@@ -119,7 +119,7 @@ for pol in fields:
 ### 変更部分
 # ある正方形について占う→その期待値を修正，を繰り返す
 # 正方形のリストを生成
-d = 3
+d = 8
 coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
 
 # 事後分布格納用リスト
@@ -170,7 +170,7 @@ oil_reserves = 0
 # アルゴリズムは考える
 up_times = 1000
 up_times_cross = 1.5
-down_times = 0.5
+down_times = 0.4
 
 for _ in range(N*N):
     #print(len(dig_order), file=sys.stderr)
@@ -194,11 +194,12 @@ for _ in range(N*N):
         #sys.exit()
         for n in coordinate_next:
             coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
-
+        
         for n in coordinate_next_cross:
             coordinate_exp_fortune[n] = up_times_cross * coordinate_exp_fortune[n]
+        
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
-
+        
         if oil_reserves == oil_grid_num:
             print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
             resp = input()
@@ -212,7 +213,7 @@ for _ in range(N*N):
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
 
     if set(coordinate_exp_fortune.values()) == {0}:
-        # print("miss", file = sys.stderr)
+        print("miss", file = sys.stderr)
         for (i,j) in possible_miss_list:
             print("q 1 {} {}".format(i, j))
             resp = int(input())

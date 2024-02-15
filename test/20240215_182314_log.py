@@ -145,7 +145,7 @@ for g in coordinates_grouped:
                 coordinate_exp_fortune[num] = val_raw * num_times
         ##################### 修正部分 #########################
         else:
-            num_times = 0.5
+            num_times = 0.1
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
