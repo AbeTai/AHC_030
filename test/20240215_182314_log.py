@@ -181,6 +181,7 @@ oil_reserves = 0
 up_times = 1000
 up_times_cross = 1.5
 down_times = 0.4
+down_times_cross = 0.2
 
 for _ in range(N*N):
     #print(len(dig_order), file=sys.stderr)
@@ -220,8 +221,12 @@ for _ in range(N*N):
     else:
         for n in coordinate_next:
             coordinate_exp_fortune[n] = down_times * coordinate_exp_fortune[n]
+        
+        for n in coordinate_next_cross:
+            coordinate_exp_fortune[n] = down_times_cross * coordinate_exp_fortune[n]
+        
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
-
+        
     if set(coordinate_exp_fortune.values()) == {0}:
         print("miss", file = sys.stderr)
         for (i,j) in possible_miss_list:

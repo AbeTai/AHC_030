@@ -18,6 +18,7 @@
 from collections import Counter
 import sys
 import copy
+from turtle import down
 
 ### 使用関数
 def extract_squares_coordinates_grouped(N, d):
@@ -94,11 +95,13 @@ oil_grid_num = len(tmp)
 # 計算前(全て0)
 coordinate_exp = dict(zip(coordinate_pool,[0]*len(coordinate_pool)))
 
-# 各ポリオミノのありうるパターンを格納 [[[(i,j)]]]
+# 各ポリオミノのありうるパターンを格納 [[(i,j)]]
+# 今回はポリオミノごとを考慮した事後確率更新を行わないので，ポリオミノごとに座標をまとめる必要がない
+# ポリオミノごとに事後確率更新の計算を別個に行う場合は，ネストをもう一つ深くする[[[(i,j)]]]
 coordinate_possible_patern = []
 # 各ポリオミノについて計算
 for pol in fields:
-    coordinate_possible_patern_poly = []
+    # coordinate_possible_patern_poly = []
     coordinate_exp_tmp = dict(zip(coordinate_pool,[0]*len(coordinate_pool)))
     # 並行移動可能幅を定義
     max_polyomino_x = max([x[0] for x in pol])
@@ -111,7 +114,7 @@ for pol in fields:
         for light in range(light_move):
             coordinate_possible_tmp = [(x[0]+low, x[1]+light) for x in pol]
             # ありうるパターンを追加
-            coordinate_possible_patern_poly.append(coordinate_possible_tmp)
+            coordinate_possible_patern.append(coordinate_possible_tmp)
             # 要素の出現回数をカウント
             element_counts = Counter(coordinate_possible_tmp)
             # 既存の辞書に出現回数を足し算
@@ -125,9 +128,10 @@ for pol in fields:
         coordinate_exp[key] += count
     
     # そのポリオミノの全パターンを追加
-    coordinate_possible_patern.append(coordinate_possible_patern_poly)
-print(coordinate_possible_patern, file=sys.stderr)
-sys.exit()
+    # coordinate_possible_patern.append(coordinate_possible_patern_poly)
+
+# print(len(coordinate_possible_patern), file=sys.stderr)
+
 ### 変更部分
 # ある正方形について占う→その期待値を修正，を繰り返す
 # 正方形のリストを生成
@@ -165,10 +169,6 @@ for g in coordinates_grouped:
     else:
         pass
 
-
-#print(coordinate_exp, file=sys.stderr)
-#print(coordinate_exp_idx_col, file=sys.stderr)
-
 # 外した時用に，元々期待値0で，占いで0になったマスのリスト作る
 # 元々0のリスト
 coordinate_exp_0 = [key for key, value in coordinate_exp.items() if value == 0]
@@ -176,9 +176,6 @@ coordinate_exp_0 = [key for key, value in coordinate_exp.items() if value == 0]
 coordinate_exp_fortune_0 = [key for key, value in coordinate_exp_fortune.items() if value == 0]
 # 差分
 possible_miss_list = list(set(coordinate_exp_fortune_0) - set(coordinate_exp_0))
-#print(coordinate_exp_0, file=sys.stderr)
-#print(coordinate_exp_fortune_0, file=sys.stderr)
-#print(possible_miss_list, file=sys.stderr)
 
 # 占い後の事後確率高い順に修正
 dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
@@ -193,32 +190,57 @@ up_times = 1000
 up_times_cross = 1.5
 down_times = 0.4
 
+# 油田があった時の処理
+up_times_poly_include = 10 # セットで存在するマスを上げる
+# down_times_poly_exclude = 1 / up_times_poly_include # セットで存在しないマスを下げる
+down_times_poly_exclude = 0.5 # セットで存在しないマスを下げる
+# 油田がなかった時の処理
+up_times_poly_exclude = 10 # セットで存在しないマスを上げる
+#down_times_poly_include = 1 / up_times_poly_exclude # セットで存在するマスを下げる
+down_times_poly_include = 0.5 # セットで存在するマスを下げる
+
+
 for _ in range(N*N):
-    #print(len(dig_order), file=sys.stderr)
+    # 掘る場所の決定（その時一番事後確率が高い座標）
     (i,j) = dig_order[0]
-    #print((i,j), file=sys.stderr)
-    #print(dig_order[0], file=sys.stderr)
     print("q 1 {} {}".format(i, j))
     resp = int(input())
+    print((i,j), resp, file=sys.stderr)
     oil_reserves += resp
-    #print(oil_reserves, file=sys.stderr)
     coordinate_exp_fortune[(i,j)] = 0
-    coordinate_next = generate_neighboor_coordinates(i,j,N)
-    coordinate_next_cross = generate_neighboor_coordinates_cross(i,j,N)
+    #coordinate_next = generate_neighboor_coordinates(i,j,N)
+    #coordinate_next_cross = generate_neighboor_coordinates_cross(i,j,N)
+
+    # その座標を含むリストを取得
+    #coordinate_include = [x for x in coordinate_possible_patern if (i,j) in x]
+    coordinate_include = []
+    for x in coordinate_possible_patern:
+        if (i,j) in x:
+            coordinate_include.extend(x)
+    coordinate_include = list(set(coordinate_include))
+    # その座標を含まないリストを取得
+    #coordinate_exclude = [x for x in coordinate_possible_patern if (i,j) not in x]
+    coordinate_exclude = []
+    for x in coordinate_possible_patern:
+        if (i,j) not in x:
+            coordinate_exclude.extend(x)
+    coordinate_exclude = list(set(coordinate_exclude))
+    #print(coordinate_include, file=sys.stderr)
+    #print(coordinate_exclude, file=sys.stderr)
 
     # 変更部分
     ## 占いの結果によって事後確率を更新
     if resp > 0:
         has_oil.append((i,j))
-        
-        #print(coordinate_next, file=sys.stderr)
-        #sys.exit()
-        for n in coordinate_next:
-            coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
-        
-        for n in coordinate_next_cross:
-            coordinate_exp_fortune[n] = up_times_cross * coordinate_exp_fortune[n]
-        
+
+        # 含むマスを上げる
+        for tmp in coordinate_include:
+            coordinate_exp_fortune[tmp] = up_times_poly_include * coordinate_exp_fortune[tmp]
+
+        # 含まないマスを下げる
+        for tmp in coordinate_exclude:
+            coordinate_exp_fortune[tmp] = down_times_poly_exclude * coordinate_exp_fortune[tmp]
+
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
         
         if oil_reserves == oil_grid_num:
@@ -229,8 +251,13 @@ for _ in range(N*N):
             sys.exit()
 
     else:
-        for n in coordinate_next:
-            coordinate_exp_fortune[n] = down_times * coordinate_exp_fortune[n]
+        # 含むマスを下げる
+        for tmp in coordinate_include:
+            coordinate_exp_fortune[tmp] = down_times_poly_include * coordinate_exp_fortune[tmp]
+        # 含まないマスを上げる
+        for tmp in coordinate_exclude:
+            coordinate_exp_fortune[tmp] = up_times_poly_exclude * coordinate_exp_fortune[tmp]
+            
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
 
     if set(coordinate_exp_fortune.values()) == {0}:
