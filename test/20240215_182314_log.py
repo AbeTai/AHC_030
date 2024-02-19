@@ -17,6 +17,7 @@
 from collections import Counter
 import sys
 import copy
+import random
 
 ### 使用関数
 def extract_squares_coordinates_grouped(N, d):
@@ -60,8 +61,29 @@ def generate_neighboor_coordinates_cross(i, j, N):
         adjacent_coordinates.append((i + 1, j + 1))
     return adjacent_coordinates
 
+def generate_outer_neighboor_coordinates(i, j, N):
+    outer_adjacent_coordinates = []
+
+    # 周囲と一つ外側の座標をチェック（角を除外）
+    for di in range(-2, 3):  # iから-2, -1, 0, 1, 2の差分
+        for dj in range(-2, 3):  # jから-2, -1, 0, 1, 2の差分
+            # 角の座標を除外
+            if abs(di) == 2 and abs(dj) == 2:
+                continue
+            # 現在の座標からの差分が(0,0)でないことを確認（現在の座標を除外）
+            if di == 0 and dj == 0:
+                continue
+
+            # 新しい座標
+            ni, nj = i + di, j + dj
+
+            # 新しい座標がグリッド内に収まるかチェック
+            if 0 <= ni < N and 0 <= nj < N:
+                outer_adjacent_coordinates.append((ni, nj))
+
+    return outer_adjacent_coordinates
+
 ### ベース部分
-# read prior information
 line = input().split()
 N = int(line[0])
 M = int(line[1])
@@ -75,7 +97,6 @@ for _ in range(M):
     for i in range(int(line[0])):
         ps.append((int(line[2*i+1]), int(line[2*i+2])))
     fields.append(ps)
-#print(square_list, file=sys.stderr)
     
 # 全マス目の一覧を生成
 coordinate_pool = []
@@ -100,7 +121,6 @@ for pol in fields:
     max_polyomino_y = max([x[1] for x in pol])
     low_move = N - max_polyomino_x
     light_move = N - max_polyomino_y
-    #print(low_move,light_move, file=sys.stderr)
 
     for low in range(low_move):
         for light in range(light_move):
@@ -143,9 +163,8 @@ for g in coordinates_grouped:
             for num in g:
                 val_raw = coordinate_exp[num]
                 coordinate_exp_fortune[num] = val_raw * num_times
-        ##################### 修正部分 #########################
         else:
-            num_times = 0.1
+            num_times = 0
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
@@ -154,10 +173,6 @@ for g in coordinates_grouped:
     else:
         pass
 
-
-#print(coordinate_exp, file=sys.stderr)
-#print(coordinate_exp_idx_col, file=sys.stderr)
-
 # 外した時用に，元々期待値0で，占いで0になったマスのリスト作る
 # 元々0のリスト
 coordinate_exp_0 = [key for key, value in coordinate_exp.items() if value == 0]
@@ -165,57 +180,52 @@ coordinate_exp_0 = [key for key, value in coordinate_exp.items() if value == 0]
 coordinate_exp_fortune_0 = [key for key, value in coordinate_exp_fortune.items() if value == 0]
 # 差分
 possible_miss_list = list(set(coordinate_exp_fortune_0) - set(coordinate_exp_0))
-#print(coordinate_exp_0, file=sys.stderr)
-#print(coordinate_exp_fortune_0, file=sys.stderr)
-#print(possible_miss_list, file=sys.stderr)
 
 # 占い後の事後確率高い順に修正
 dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
-#print(dig_order, file=sys.stderr)
 
 has_oil = []
 oil_reserves = 0
 
 # ルールベースならグリッドサーチ
 # アルゴリズムは考える
-up_times = 1000
+up_times = 100000
 up_times_cross = 1.5
+up_times_outer = 1.1
 down_times = 0.4
 down_times_cross = 0.2
+down_times_outer = 0.1
 
 for _ in range(N*N):
-    #print(len(dig_order), file=sys.stderr)
     (i,j) = dig_order[0]
-    #print((i,j), file=sys.stderr)
-    #print(dig_order[0], file=sys.stderr)
     print("q 1 {} {}".format(i, j))
     resp = int(input())
     oil_reserves += resp
-    #print(oil_reserves, file=sys.stderr)
+    
     coordinate_exp_fortune[(i,j)] = 0
     coordinate_next = generate_neighboor_coordinates(i,j,N)
     coordinate_next_cross = generate_neighboor_coordinates_cross(i,j,N)
+    coordinate_next_outer = set(generate_outer_neighboor_coordinates(i,j,N)) - set(coordinate_next) - set(coordinate_next_cross)
 
     # 変更部分
     ## 占いの結果によって事後確率を更新
     if resp > 0:
         has_oil.append((i,j))
-        
-        #print(coordinate_next, file=sys.stderr)
-        #sys.exit()
+
         for n in coordinate_next:
             coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
         
         for n in coordinate_next_cross:
             coordinate_exp_fortune[n] = up_times_cross * coordinate_exp_fortune[n]
+
+        for n in coordinate_next_outer:
+            coordinate_exp_fortune[n] = up_times_outer * coordinate_exp_fortune[n]
         
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
         
         if oil_reserves == oil_grid_num:
             print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
             resp = input()
-            # print(resp, file=sys.stderr)
-            # assert resp == "1"
             sys.exit()
 
     else:
@@ -224,11 +234,14 @@ for _ in range(N*N):
         
         for n in coordinate_next_cross:
             coordinate_exp_fortune[n] = down_times_cross * coordinate_exp_fortune[n]
-        
+        """
+        for n in coordinate_next_outer:
+            coordinate_exp_fortune[n] = down_times_outer * coordinate_exp_fortune[n]
+        """
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
         
     if set(coordinate_exp_fortune.values()) == {0}:
-        print("miss", file = sys.stderr)
+        random.shuffle(possible_miss_list)
         for (i,j) in possible_miss_list:
             print("q 1 {} {}".format(i, j))
             resp = int(input())
@@ -239,7 +252,5 @@ for _ in range(N*N):
             if oil_reserves == oil_grid_num:
                 print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
                 resp = input()
-                # print(resp, file=sys.stderr)
-                # assert resp == "1"
                 sys.exit()
 
