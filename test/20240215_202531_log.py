@@ -189,6 +189,7 @@ oil_reserves = 0
 up_times = 1000
 up_times_cross = 1.5
 down_times = 0.4
+down_times_cross = 0.2
 
 # 油田があった時の処理
 up_times_poly_include = 10 # セットで存在するマスを上げる
@@ -228,6 +229,9 @@ for _ in range(N*N):
     #print(coordinate_include, file=sys.stderr)
     #print(coordinate_exclude, file=sys.stderr)
 
+    coordinate_next = generate_neighboor_coordinates(i,j,N)
+    coordinate_next_cross = generate_neighboor_coordinates_cross(i,j,N)
+
     # 変更部分
     ## 占いの結果によって事後確率を更新
     if resp > 0:
@@ -240,6 +244,12 @@ for _ in range(N*N):
         # 含まないマスを下げる
         for tmp in coordinate_exclude:
             coordinate_exp_fortune[tmp] = down_times_poly_exclude * coordinate_exp_fortune[tmp]
+
+        for n in coordinate_next:
+            coordinate_exp_fortune[n] = up_times * coordinate_exp_fortune[n]
+        
+        for n in coordinate_next_cross:
+            coordinate_exp_fortune[n] = up_times_cross * coordinate_exp_fortune[n]
 
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
         
@@ -258,6 +268,12 @@ for _ in range(N*N):
         for tmp in coordinate_exclude:
             coordinate_exp_fortune[tmp] = up_times_poly_exclude * coordinate_exp_fortune[tmp]
             
+        for n in coordinate_next:
+            coordinate_exp_fortune[n] = down_times * coordinate_exp_fortune[n]
+        
+        for n in coordinate_next_cross:
+            coordinate_exp_fortune[n] = down_times_cross * coordinate_exp_fortune[n]
+
         dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
 
     if set(coordinate_exp_fortune.values()) == {0}:

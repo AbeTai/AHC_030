@@ -152,7 +152,7 @@ for g in coordinates_grouped:
                 coordinate_exp_fortune[num] = val_raw * num_times
         ##################### 修正部分 #########################
         else:
-            num_times = 0.1
+            num_times = resp / exp_sum_idx
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
@@ -181,7 +181,10 @@ for g in coordinates_grouped_another:
                 coordinate_exp_fortune_another[num] = val_raw * num_times
         ##################### 修正部分 #########################
         else:
-            num_times = 0.1
+            if exp_sum_idx == 0:
+                num_times = 0
+            else:
+                num_times = resp / exp_sum_idx
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
@@ -191,7 +194,9 @@ for g in coordinates_grouped_another:
         pass
 
 for idx in coordinate_exp_fortune.keys():
-    coordinate_exp_fortune[idx] = np.mean(coordinate_exp_fortune[idx], coordinate_exp_fortune_another[idx])
+    coordinate_exp_fortune[idx] = np.mean([coordinate_exp_fortune[idx], coordinate_exp_fortune_another[idx]])
+    # coordinate_exp_fortune[idx] = np.sqrt(coordinate_exp_fortune[idx] * coordinate_exp_fortune_another[idx])
+    # coordinate_exp_fortune[idx] = max(coordinate_exp_fortune[idx], coordinate_exp_fortune_another[idx])
 
 
 # 外した時用に，元々期待値0で，占いで0になったマスのリスト作る
