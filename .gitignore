@@ -8,3 +8,4 @@ add_NM.py
 .gitignore
 test.py
 .vscode
+*.csv
