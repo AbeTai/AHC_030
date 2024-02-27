@@ -164,7 +164,7 @@ for g in coordinates_grouped:
                 val_raw = coordinate_exp[num]
                 coordinate_exp_fortune[num] = val_raw * num_times
         else:
-            num_times = 0
+            num_times = 0.1
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
@@ -191,10 +191,14 @@ oil_reserves = 0
 # アルゴリズムは考える
 up_times = 100000
 up_times_cross = 1.5
-up_times_outer = 1.1
+up_times_outer = 1.0
 down_times = 0.4
 down_times_cross = 0.2
 down_times_outer = 0.1
+
+up_times2 = 10000000
+up_times_cross2 = 2
+up_times_outer2 = 1.0
 
 for _ in range(N*N):
     (i,j) = dig_order[0]
@@ -209,7 +213,27 @@ for _ in range(N*N):
 
     # 変更部分
     ## 占いの結果によって事後確率を更新
-    if resp > 0:
+    if resp > 1:
+        has_oil.append((i,j))
+
+        for n in coordinate_next:
+            coordinate_exp_fortune[n] = up_times2 * coordinate_exp_fortune[n]
+        
+        for n in coordinate_next_cross:
+            coordinate_exp_fortune[n] = up_times_cross2 * coordinate_exp_fortune[n]
+
+        for n in coordinate_next_outer:
+            coordinate_exp_fortune[n] = up_times_outer2 * coordinate_exp_fortune[n]
+        
+        dig_order = list(dict(sorted(coordinate_exp_fortune.items(), key=lambda item: item[1], reverse=True)).keys())
+        
+        if oil_reserves == oil_grid_num:
+            print("a {} {}".format(len(has_oil), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), has_oil))))
+            resp = input()
+            sys.exit()
+
+
+    elif resp > 0:
         has_oil.append((i,j))
 
         for n in coordinate_next:

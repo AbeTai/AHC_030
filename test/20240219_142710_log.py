@@ -18,7 +18,6 @@
 from collections import Counter
 import sys
 import copy
-from turtle import down
 
 ### 使用関数
 def extract_squares_coordinates_grouped(N, d):

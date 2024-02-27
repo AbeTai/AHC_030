@@ -20,7 +20,7 @@ PROGRAM_CMD = f"./tools/target/release/tester python3 {filename}.py"
 
 # テスト対象seed番号
 START_SEED = 0
-SIZE = 100
+SIZE = 3000
 STEP = 1
 
 

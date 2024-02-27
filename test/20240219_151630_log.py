@@ -21,6 +21,16 @@ from collections import Counter
 import sys
 import copy
 
+# コマンドライン引数を取得
+args = sys.argv[1:]  # sys.argv[0] はスクリプト名なので除外
+
+d = int(args[0])
+num_times = float(args[1])
+up_times = float(args[2])
+up_times_cross = float(args[3])
+down_times = float(args[4])
+down_times_cross = float(args[5])
+
 ### 使用関数
 def extract_squares_coordinates_grouped(N, d):
     squares = []
@@ -123,7 +133,7 @@ for pol in fields:
 ### 変更部分
 # ある正方形について占う→その期待値を修正，を繰り返す
 # 正方形のリストを生成
-d = 8
+#d = 8
 coordinates_grouped = extract_squares_coordinates_grouped(N, d) # 占いに渡す座標のリストを生成
 
 # 事後分布格納用リスト
@@ -141,14 +151,14 @@ for g in coordinates_grouped:
         print("q {} {}".format(len(g), ' '.join(map(lambda x: "{} {}".format(x[0], x[1]), g))))
         resp = float(input()) # V(s)の近似値を受け取る
         if resp > 0:
-            num_times = resp / exp_sum_idx
+            num_times_d = resp / exp_sum_idx
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
-                coordinate_exp_fortune[num] = val_raw * num_times
+                coordinate_exp_fortune[num] = val_raw * num_times_d
         ##################### 修正部分 #########################
         else:
-            num_times = 0.1
+            #num_times = 0.1
             ## 期待値にかけ直す
             for num in g:
                 val_raw = coordinate_exp[num]
@@ -181,10 +191,10 @@ oil_reserves = 0
 
 # ルールベースならグリッドサーチ
 # アルゴリズムは考える
-up_times = 1000
-up_times_cross = 1.5
-down_times = 0.4
-down_times_cross = 0.2
+#up_times = 1000
+#up_times_cross = 1.5
+#down_times = 0.4
+#down_times_cross = 0.2
 
 for _ in range(N*N):
     #print(len(dig_order), file=sys.stderr)
@@ -245,4 +255,3 @@ for _ in range(N*N):
                 # print(resp, file=sys.stderr)
                 # assert resp == "1"
                 sys.exit()
-
